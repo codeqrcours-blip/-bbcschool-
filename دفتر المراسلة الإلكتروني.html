@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دفتر المراسلة الإلكتروني المدرسي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f97316', // Vibrant Orange
+                        primaryHover: '#ea580c',
+                        beigeBg: '#fdfbf7', // Warm Beige background
+                        beigeCard: '#f5f0eb', // Card Beige
+                        darkText: '#1f2937',
+                        accentBlack: '#111827'
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -3px rgba(249, 115, 22, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
+                        'card': '0 4px 20px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #fdfbf7;
+        }
+    </style>
+</head>
+<body class="bg-beigeBg text-darkText min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-accentBlack text-white py-4 px-6 shadow-md border-b-4 border-primary">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="bg-primary text-white p-2.5 rounded-xl shadow-soft font-bold text-xl">
+                    <span>📚</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">دفتر المراسلة الإلكتروني</h1>
+                    <p class="text-xs text-orange-200">المنصة الذكية للتواصل بين المدرسة والبيت</p>
+                </div>
+            </div>
+            <div id="userInfoHeader" class="hidden flex items-center space-x-4 space-x-reverse">
+                <span id="welcomeUserText" class="text-sm font-semibold bg-zinc-800 px-3 py-1.5 rounded-lg border border-zinc-700"></span>
+                <button onclick="logout()" class="bg-primary hover:bg-primaryHover text-white text-xs px-4 py-2 rounded-lg font-bold transition duration-300 shadow-md">
+                    تسجيل الخروج
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
+
+        <!-- 1. شاشة تسجيل الدخول -->
+        <section id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-soft border border-orange-100 mt-10">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-orange-100 text-primary p-3 rounded-full mb-3 text-2xl font-bold">🔐</div>
+                <h2 class="text-2xl font-black text-accentBlack">تسجيل الدخول للنظام</h2>
+                <p class="text-sm text-gray-500 mt-1">أدخل الكود الخاص بك للمتابعة</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">كود الدخول:</label>
+                    <input type="text" id="accessCode" placeholder="مثال: teacher1 أو parent1" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-center tracking-widest font-bold text-lg bg-beigeBg">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-primaryHover text-white py-3.5 rounded-xl font-bold shadow-soft transition duration-300 transform active:scale-95">
+                    دخول إلى المنصة
+                </button>
+            </form>
+
+            <!-- معلومات تجريبية مساعدة للمستخدم -->
+            <div class="mt-8 p-4 bg-beigeCard rounded-xl border border-orange-200 text-xs text-gray-600 space-y-2">
+                <p class="font-bold text-accentBlack text-sm mb-1">💡 أكواد تجريبية للتجربة:</p>
+                <div class="flex justify-between items-center bg-white p-2 rounded border border-orange-100">
+                    <span>حساب أستاذ:</span>
+                    <code class="bg-orange-100 text-primary font-bold px-2 py-0.5 rounded cursor-pointer" onclick="fillCode('teacher1')">teacher1</code>
+                </div>
+                <div class="flex justify-between items-center bg-white p-2 rounded border border-orange-100">
+                    <span>حساب ولي أمر (أمين بن 1AM1):</span>
+                    <code class="bg-orange-100 text-primary font-bold px-2 py-0.5 rounded cursor-pointer" onclick="fillCode('parent1')">parent1</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. واجهة المعلم -->
+        <section id="teacherInterface" class="hidden space-y-6">
+            <!-- شريط التنقل الهرمي للأساتذة -->
+            <div class="bg-white p-4 rounded-xl shadow-card border border-orange-100 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-2 space-x-reverse text-sm">
+                    <span class="font-bold text-gray-500">مسار التصفح:</span>
+                    <button onclick="resetTeacherView()" class="text-primary font-bold hover:underline">المستويات</button>
+                    <span id="breadcrumbLevel" class="hidden text-gray-400">/ <span id="currentLevelName" class="text-accentBlack font-semibold"></span></span>
+                    <span id="breadcrumbSection" class="hidden text-gray-400">/ <span id="currentSectionName" class="text-accentBlack font-semibold"></span></span>
+                </div>
+                <div class="text-xs bg-orange-50 text-primary font-bold px-3 py-1.5 rounded-lg border border-orange-200">
+                    👨‍🏫 لوحة تحكم الأستاذ
+                </div>
+            </div>
+
+            <!-- الخطوة أ: اختيار المستوى (1AM إلى 4AM) -->
+            <div id="levelsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- يتم تعبئتها ديناميكياً عبر الجافاسكريبت -->
+            </div>
+
+            <!-- الخطوة ب: اختيار الفوج التربوي -->
+            <div id="sectionsContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- يتم تعبئتها ديناميكياً -->
+            </div>
+
+            <!-- الخطوة ج: قائمة التلاميذ (25 تلميذاً) -->
+            <div id="studentsContainer" class="hidden">
+                <div class="mb-4 flex justify-between items-center bg-accentBlack text-white p-4 rounded-xl shadow">
+                    <h3 class="text-lg font-bold" id="studentsListTitle">قائمة تلاميذ الفوج</h3>
+                    <span class="text-xs bg-primary px-3 py-1 rounded-lg">انقر على اسم التلميذ لإرسال ملاحظة</span>
+                </div>
+                <div id="studentsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <!-- يتم تعبئتها ديناميكياً -->
+                </div>
+            </div>
+        </section>
+
+        <!-- نافذة منبثقة (Modal) لإرسال ملاحظة للتلميذ -->
+        <div id="noteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-2xl shadow-soft border border-orange-200 overflow-hidden transform transition-all">
+                <div class="bg-accentBlack text-white px-6 py-4 flex justify-between items-center border-b-4 border-primary">
+                    <h3 id="modalStudentName" class="font-bold text-lg">إرسال ملاحظة للتلميذ</h3>
+                    <button onclick="closeNoteModal()" class="text-gray-400 hover:text-white text-xl font-bold">&times;</button>
+                </div>
+                <form id="noteForm" onsubmit="submitNote(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                    <input type="hidden" id="selectedStudentId">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">اسم الأستاذ:</label>
+                            <input type="text" id="teacherNameInput" value="أستاذ المادة" required
+                                class="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-primary bg-beigeBg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">المادة التعليمية (10 مواد):</label>
+                            <select id="subjectSelect" required class="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-primary bg-beigeBg">
+                                <option value="اللغة العربية">اللغة العربية</option>
+                                <option value="الرياضيات">الرياضيات</option>
+                                <option value="اللغة الفرنسية">اللغة الفرنسية</option>
+                                <option value="اللغة الإنجليزية">اللغة الإنجليزية</option>
+                                <option value="التاريخ والجغرافيا">التاريخ والجغرافيا</option>
+                                <option value="العلوم الطبيعية">العلوم الطبيعية</option>
+                                <option value="الفيزياء وعلوم التكنولوجيا">الفيزياء وعلوم التكنولوجيا</option>
+                                <option value="التربية الإسلامية">التربية الإسلامية</option>
+                                <option value="التربية المدنية">التربية المدنية</option>
+                                <option value="التربية التشملية / الرياضية">التربية البدنية</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-2">بنك الملاحظات الشائعة (اختر واحدة أو أكثر):</label>
+                        <div class="space-y-2 bg-beigeBg p-4 rounded-xl border border-orange-100">
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="كتابة الدرس / عدم إتمام الدرس" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                                <span>كتابة الدرس / عدم إتمام الدرس في الكراس</span>
+                            </label>
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="نسيان الأدوات المدرسية أو الكراريس" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                                <span>نسيان الأدوات المدرسية أو الكراريس</span>
+                            </label>
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="عدم إنجاز الواجبات المنزلية" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                                <span>عدم إنجاز الواجبات المنزلية</span>
+                            </label>
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="التشويش في القسم / عدم الانضباط" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                                <span>التشويش في القسم / عدم الانضباط</span>
+                            </label>
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="عدم التركيز / التشتت الملحوظ" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary">
+                                <span>عدم التركيز / التشتت الملحوظ أثناء الشرح</span>
+                            </label>
+                            <label class="flex items-center space-x-3 space-x-reverse cursor-pointer text-sm font-medium">
+                                <input type="checkbox" name="commonNotes" value="سلوك إيجابي ومميز / تفوق ملحوظ" class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary text-green-600">
+                                <span class="text-green-700 font-semibold">🌟 سلوك إيجابي ومميز / تفوق ملحوظ</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">ملاحظة إضافية (اختياري):</label>
+                        <textarea id="customNoteText" rows="2" placeholder="اكتب ملاحظة مخصصة هنا إن وجد..."
+                            class="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-primary bg-beigeBg"></textarea>
+                    </div>
+
+                    <div class="flex space-x-3 space-x-reverse pt-2">
+                        <button type="submit" class="flex-1 bg-primary hover:bg-primaryHover text-white py-2.5 rounded-xl font-bold shadow transition">
+                            إرسال فوري للولي 🚀
+                        </button>
+                        <button type="button" onclick="closeNoteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2.5 rounded-xl font-bold transition">
+                            إلغاء
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. واجهة ولي الأمر -->
+        <section id="parentInterface" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white p-6 rounded-2xl shadow-card border border-orange-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-black text-accentBlack" id="parentWelcomeTitle">مرحباً ولي التلميذ</h2>
+                    <p class="text-sm text-gray-500 mt-1">دفتر المراسلة الإلكتروني الخاص بابنك/ابتنتك</p>
+                </div>
+                <div class="bg-orange-100 text-primary p-3 rounded-xl font-bold text-sm">
+                    👨‍👦 حساب ولي أمر
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-card border border-orange-100 overflow-hidden">
+                <div class="bg-accentBlack text-white px-6 py-4 font-bold flex justify-between items-center">
+                    <span>التنبيهات والملاحظات الواردة من الأساتذة</span>
+                    <span id="notesCountBadge" class="bg-primary text-xs px-2.5 py-1 rounded-full">0 ملاحظة</span>
+                </div>
+                <div id="parentNotesList" class="p-6 divide-y divide-gray-100">
+                    <!-- يتم جلب الملاحظات هنا -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-accentBlack text-white text-center py-4 border-t border-zinc-800 text-xs">
+        <p>جميع الحقوق محفوظة © 2026 - نظام دفتر المراسلة المدرسي الذكي</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // هيكلة البيانات التجريبية للأقسام الـ 25 (المستويات من 1AM إلى 4AM)
+        const levelsData = [
+            { id: '1AM', name: 'السنة الأولى متوسط (1AM)', sections: ['1AM1', '1AM2', '1AM3', '1AM4', '1AM5', '1AM6', '1AM7'] },
+            { id: '2AM', name: 'السنة الثانية متوسط (2AM)', sections: ['2AM1', '2AM2', '2AM3', '2AM4', '2AM5', '2AM6'] },
+            { id: '3AM', name: 'السنة الثالثة متوسط (3AM)', sections: ['3AM1', '3AM2', '3AM3', '3AM4', '3AM5', '3AM6'] },
+            { id: '4AM', name: 'السنة الرابعة متوسط (4AM)', sections: ['4AM1', '4AM2', '4AM3', '4AM4', '4AM5', '4AM6'] }
+        ];
+
+        // أسماء تونسية/جزائرية واقعية لملء 25 تلميذاً في كل فوج افتراضياً
+        const sampleFirstNames = ["محمد", "أمين", "إسلام", "عبد الرحمان", "يوسف", "حمزة", "أنس", "إبراهيم", "زكريا", "إلياس", "ريان", "فارس", "مهدي", "أيوب", "أيمن", "مريم", "فاطمة الزهراء", "إيمان", "سارة", "آية", "رنيم", "نور الهدى", "يقين", "سرين", "هدى"];
+
+        let currentActiveRole = null;
+        let selectedLevel = null;
+        let selectedSection = null;
+
+        // تهيئة التخزين المحلي للملاحظات إن لم تقم موجودة
+        if (!localStorage.getItem('school_notes')) {
+            localStorage.setItem('school_notes', JSON.stringify([]));
+        }
+
+        function fillCode(code) {
+            document.getElementById('accessCode').value = code;
+        }
+
+        // معالجة تسجيل الدخول
+        function handleLogin(event) {
+            event.preventDefault();
+            const code = document.getElementById('accessCode').value.trim();
+
+            if (code === 'teacher1' || code.startsWith('teacher')) {
+                currentActiveRole = 'teacher';
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('teacherInterface').classList.remove('hidden');
+                document.getElementById('userInfoHeader').classList.remove('hidden');
+                document.getElementById('welcomeUserText').innerText = 'أهلاً بك، الأستاذ (مشرف المواد)';
+                renderLevels();
+            } else if (code === 'parent1' || code.startsWith('parent')) {
+                currentActiveRole = 'parent';
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('parentInterface').classList.remove('hidden');
+                document.getElementById('userInfoHeader').classList.remove('hidden');
+                document.getElementById('welcomeUserText').innerText = 'أهلاً بك، ولي التلميذ (أمين 1AM1)';
+                document.getElementById('parentWelcomeTitle').innerText = 'مرحباً بولي التلميذ: أمين بن (1AM1)';
+                loadParentNotes('1AM1', 'أمين');
+            } else {
+                alert('كود الدخول غير صحيح! يجيب استخدام الأكواد التجريبية مثل teacher1 أو parent1');
+            }
+        }
+
+        function logout() {
+            currentActiveRole = null;
+            selectedLevel = null;
+            selectedSection = null;
+            document.getElementById('accessCode').value = '';
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('teacherInterface').classList.add('hidden');
+            document.getElementById('parentInterface').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.add('hidden');
+            resetTeacherView();
+        }
+
+        // عرض المستويات في واجهة المعلم
+        function renderLevels() {
+            const container = document.getElementById('levelsContainer');
+            container.innerHTML = '';
+            levelsData.forEach(lvl => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-2xl shadow-card border border-orange-100 hover:border-primary transition cursor-pointer flex flex-col justify-between';
+                card.onclick = () => selectLevel(lvl.id);
+                card.innerHTML = `
+                    <div>
+                        <div class="text-3xl mb-3">🏫</div>
+                        <h4 class="font-bold text-lg text-accentBlack">${lvl.name}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${lvl.sections.length} أفواج تربوية متاحة</p>
+                    </div>
+                    <div class="mt-4 text-primary font-bold text-xs flex items-center justify-end">
+                        <span>اختر المستوى</span> &larr;
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectLevel(levelId) {
+            selectedLevel = levelsData.find(l => l.id === levelId);
+            document.getElementById('levelsContainer').classList.add('hidden');
+            document.getElementById('sectionsContainer').classList.remove('hidden');
+            document.getElementById('breadcrumbLevel').classList.remove('hidden');
+            document.getElementById('currentLevelName').innerText = selectedLevel.name;
+
+            const secContainer = document.getElementById('sectionsContainer');
+            secContainer.innerHTML = '';
+            selectedLevel.sections.forEach(sec => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-2xl shadow-card border border-orange-100 hover:border-primary transition cursor-pointer text-center';
+                card.onclick = () => selectSection(sec);
+                card.innerHTML = `
+                    <div class="text-2xl mb-2 font-black text-primary">${sec}</div>
+                    <p class="text-xs text-gray-600 font-semibold">الفوج التربوي النظامي</p>
+                    <span class="inline-block mt-3 bg-orange-50 text-orange-600 text-xs px-3 py-1 rounded-full font-bold">عرض 25 تلميذاً</span>
+                `;
+                secContainer.appendChild(card);
+            });
+        }
+
+        function selectSection(sectionName) {
+            selectedSection = sectionName;
+            document.getElementById('sectionsContainer').classList.add('hidden');
+            document.getElementById('studentsContainer').classList.remove('hidden');
+            document.getElementById('breadcrumbSection').classList.remove('hidden');
+            document.getElementById('currentSectionName').innerText = sectionName;
+            document.getElementById('studentsListTitle').innerText = `قائمة تلاميذ القسم: ${sectionName} (25 تلميذاً)`;
+
+            renderStudents(sectionName);
+        }
+
+        function renderStudents(sectionName) {
+            const grid = document.getElementById('studentsGrid');
+            grid.innerHTML = '';
+            
+            // توليد 25 تلميذاً افتراضياً بثبات لهذا القسم
+            for (let i = 1; i <= 25; i++) {
+                const studentName = `${sampleFirstNames[(i - 1) % sampleFirstNames.length]} لقب التلميذ ${i}`;
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl shadow-card border border-orange-100 hover:shadow-soft hover:border-primary transition cursor-pointer flex flex-col items-center text-center';
+                card.onclick = () => openNoteModal(i, studentName, sectionName);
+                card.innerHTML = `
+                    <div class="w-12 h-12 bg-orange-100 text-primary font-bold rounded-full flex items-center justify-center text-lg mb-2 border border-orange-200">
+                        ${i}
+                    </div>
+                    <h5 class="font-bold text-sm text-accentBlack mb-1">${studentName}</h5>
+                    <span class="text-[10px] text-gray-400">مرتبط بولي الأمر</span>
+                    <button class="mt-3 w-full bg-orange-50 hover:bg-primary hover:text-white text-primary text-xs py-1.5 rounded-lg font-bold transition">
+                        تسجيل ملاحظة ✍️
+                    </button>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function resetTeacherView() {
+            selectedLevel = null;
+            selectedSection = null;
+            document.getElementById('levelsContainer').classList.remove('hidden');
+            document.getElementById('sectionsContainer').classList.add('hidden');
+            document.getElementById('studentsContainer').classList.add('hidden');
+            document.getElementById('breadcrumbLevel').classList.add('hidden');
+            document.getElementById('breadcrumbSection').classList.add('hidden');
+        }
+
+        // نافذة كتابة الملاحظة
+        function openNoteModal(studentId, studentName, sectionName) {
+            document.getElementById('selectedStudentId').value = `${sectionName}_${studentId}`;
+            document.getElementById('modalStudentName').innerText = `إرسال ملاحظة للتلميذ: ${studentName} (${sectionName})`;
+            document.getElementById('noteModal').classList.remove('hidden');
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.add('hidden');
+            document.getElementById('noteForm').reset();
+        }
+
+        // إرسال الملاحظة
+        function submitNote(event) {
+            event.preventDefault();
+            const studentKey = document.getElementById('selectedStudentId').value;
+            const teacherName = document.getElementById('teacherNameInput').value;
+            const subject = document.getElementById('subjectSelect').value;
+            const customText = document.getElementById('customNoteText').value;
+
+            const checkboxes = document.querySelectorAll('input[name="commonNotes"]:checked');
+            const checkedNotes = Array.from(checkboxes).map(cb => cb.value);
+
+            if (checkedNotes.length === 0 && !customText.trim()) {
+                alert('الرجاء اختيار ملاحظة واحدة على الأقل من القائمة أو كتابة ملاحظة مخصصة.');
+                return;
+            }
+
+            const newNote = {
+                id: Date.now(),
+                studentKey: studentKey,
+                section: studentKey.split('_')[0],
+                teacherName: teacherName,
+                subject: subject,
+                notes: checkedNotes,
+                customText: customText,
+                date: new Date().toLocaleDateString('ar-DZ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            };
+
+            let notesList = JSON.parse(localStorage.getItem('school_notes')) || [];
+            notesList.unshift(newNote);
+            localStorage.setItem('school_notes', JSON.stringify(notesList));
+
+            alert('تم إرسال الملاحظة بنجاح لتصل مباشرة إلى ولي الأمر المعني!');
+            closeNoteModal();
+        }
+
+        // تحميل ملاحظات ولي الأمر
+        function loadParentNotes(section, studentName) {
+            const notesList = JSON.parse(localStorage.getItem('school_notes')) || [];
+            // للتجربة، نعرض الملاحظات الخاصة بهذا الفوج أو التي تمت إضافتها مؤخراً
+            const container = document.getElementById('parentNotesList');
+            container.innerHTML = '';
+
+            if (notesList.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-400 py-8 text-sm">لا توجد ملاحظات مسجلة حتى الآن لابنك.</p>`;
+                document.getElementById('notesCountBadge').innerText = '0 ملاحظة';
+                return;
+            }
+
+            document.getElementById('notesCountBadge').innerText = `${notesList.length} ملاحظة`;
+
+            notesList.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'py-4 first:pt-0 last:pb-0';
+                
+                let notesHtml = item.notes.map(n => `<span class="inline-block bg-orange-50 text-orange-800 text-xs px-2.5 py-1 rounded-lg border border-orange-200 font-medium m-1">• ${n}</span>`).join('');
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center space-x-2 space-x-reverse">
+                            <span class="bg-primary text-white text-xs px-2.5 py-1 rounded-lg font-bold">${item.subject}</span>
+                            <span class="text-xs text-gray-500 font-semibold">الأستاذ: ${item.teacherName}</span>
+                        </div>
+                        <span class="text-[11px] text-gray-400">${item.date}</span>
+                    </div>
+                    <div class="mt-2 space-y-1">
+                        <div>${notesHtml}</div>
+                        ${item.customText ? `<p class="text-xs text-gray-700 bg-beigeBg p-2.5 rounded-lg border border-gray-200 mt-2"><strong>ملاحظة إضافية:</strong> ${item.customText}</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
